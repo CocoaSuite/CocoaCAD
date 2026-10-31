@@ -19,7 +19,19 @@ self.onmessage = async (ev: MessageEvent<KernelRequest>) => {
   try {
     if (req.type === "init") {
       const t0 = performance.now();
-      const oc = await (opencascade as unknown as (o: object) => Promise<unknown>)({ locateFile: () => req.wasmUrl });
+      let opts: object;
+      if (req.wasmParts?.length) {
+        // Hosts with a per-file size limit get the module in pieces; rejoin them here.
+        const bufs = await Promise.all(req.wasmParts.map((u) => fetch(u).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`Could not load ${u} (${r.status})`))))));
+        const all = new Uint8Array(bufs.reduce((s, b) => s + b.byteLength, 0));
+        let o = 0;
+        for (const b of bufs) {
+          all.set(new Uint8Array(b), o);
+          o += b.byteLength;
+        }
+        opts = { wasmBinary: all.buffer };
+      } else opts = { locateFile: () => req.wasmUrl };
+      const oc = await (opencascade as unknown as (o: object) => Promise<unknown>)(opts);
       R.setOC(oc as Parameters<typeof R.setOC>[0]);
       engine = new Engine(R);
       post({ id: req.id, ok: true, type: "init", ms: performance.now() - t0 });

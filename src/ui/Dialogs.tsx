@@ -32,6 +32,7 @@ export function Dialogs() {
 
 function StartScreen({ onClose }: { onClose: () => void }) {
   const [recent, setRecent] = useState<ProjectSummary[] | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
   useEffect(() => {
     listProjects().then(setRecent, () => setRecent([]));
   }, []);
@@ -93,18 +94,32 @@ function StartScreen({ onClose }: { onClose: () => void }) {
                   {fmt.format(r.modifiedAt)} · {t(`${r.features} features`, `элементов: ${r.features}`)}
                 </small>
               </div>
-              <button
-                className="del"
-                title={t("Delete from this device", "Удалить с устройства")}
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!confirm(t(`Delete “${r.name}” from this device?`, `Удалить «${r.name}» с этого устройства?`))) return;
-                  await deleteProject(r.id);
-                  setRecent((x) => x?.filter((y) => y.id !== r.id) ?? null);
-                }}
-              >
-                <Icon name="trash" />
-              </button>
+              {confirming === r.id ? (
+                <button
+                  className="danger"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    await deleteProject(r.id);
+                    setConfirming(null);
+                    setRecent((x) => x?.filter((y) => y.id !== r.id) ?? null);
+                  }}
+                  onBlur={() => setConfirming(null)}
+                  autoFocus
+                >
+                  {t("Delete", "Удалить")}
+                </button>
+              ) : (
+                <button
+                  className="del"
+                  title={t("Delete from this device", "Удалить с устройства")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirming(r.id);
+                  }}
+                >
+                  <Icon name="trash" />
+                </button>
+              )}
             </div>
           ))}
         </div>

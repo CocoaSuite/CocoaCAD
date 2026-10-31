@@ -42,7 +42,7 @@ export interface RebuildResult {
 }
 
 export type KernelRequest =
-  | { id: number; type: "init"; wasmUrl: string }
+  | { id: number; type: "init"; wasmUrl: string; wasmParts?: string[] }
   | { id: number; type: "rebuild"; features: Feature[] }
   | { id: number; type: "export"; format: "stl" | "step"; bodyIds: Id[]; names: Record<Id, string> };
 

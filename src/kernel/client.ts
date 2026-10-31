@@ -32,7 +32,12 @@ export class WorkerKernel implements GeometryKernel {
       for (const p of this.pending.values()) p.reject(new Error(ev.message || "Geometry worker crashed"));
       this.pending.clear();
     };
-    this.ready = this.call({ type: "init", wasmUrl: new URL(wasmUrl, location.href).href }).then(() => undefined);
+    const parts = (globalThis as { __COCOACAD_WASM_PARTS__?: string[] }).__COCOACAD_WASM_PARTS__;
+    this.ready = this.call({
+      type: "init",
+      wasmUrl: new URL(wasmUrl, location.href).href,
+      ...(parts?.length ? { wasmParts: parts.map((p) => new URL(p, location.href).href) } : {}),
+    }).then(() => undefined);
   }
 
   private call(req: DistributiveOmit<KernelRequest, "id">): Promise<KernelResponse> {

@@ -23,6 +23,8 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+// Hosted (split-module) builds run inside a frame where service workers are unavailable.
+const hosted = !!(globalThis as { __COCOACAD_WASM_PARTS__?: unknown }).__COCOACAD_WASM_PARTS__;
+if ("serviceWorker" in navigator && import.meta.env.PROD && !hosted) {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => undefined));
 }
